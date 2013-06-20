@@ -8,14 +8,16 @@ import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinUser.HHOOK;
 import com.sun.jna.platform.win32.WinUser.KBDLLHOOKSTRUCT;
 import com.sun.jna.platform.win32.WinUser.LowLevelKeyboardProc;
-import com.yj.frame.Tempt;
+import com.yj.frame.Client;;
 
 public class KeyHook {
     private static boolean quit;
     private static HHOOK hhk;
     private static LowLevelKeyboardProc keyboardHook;
+    private static int preCode = 0;
+    
     public static void main(String[] args) {
-    	final Tempt tempt = new Tempt();
+    	final Client client = new Client();
         final User32 lib = User32.INSTANCE;
         HMODULE hMod = Kernel32.INSTANCE.GetModuleHandle(null);
         keyboardHook = new LowLevelKeyboardProc() {
@@ -23,14 +25,19 @@ public class KeyHook {
 			@Override
 			public LRESULT callback(int nCode, WPARAM wParam, KBDLLHOOKSTRUCT info) {
 				 if (nCode >= 0) {
-					 System.out.println(info.vkCode);
-					 if (info.vkCode == 81) {
+					 System.out.println(info.vkCode + "once");
+					 int vkCode = info.vkCode;
+					 if (vkCode == 81 && preCode != vkCode ) {
                          quit = true;
-                     }else if(info.vkCode == 121){
-                    	 tempt.flag = true;
-                     }else if(info.vkCode == 120){
-                    	 tempt.flag = false;
+                     }else if(vkCode == 121 && preCode != vkCode ){
+                    	 client.flag = true;
+                     }else if(vkCode == 120 && preCode != vkCode ){
+                    	 client.flag = false;
+                     }else if(vkCode == 122 && preCode != vkCode ){
+//                    	 client.requestFocus();
+                    	 client.listAdd();
                      }
+					 preCode = vkCode;
 				 }
 				return lib.CallNextHookEx(hhk, nCode, wParam, info.getPointer());
 			}
@@ -52,8 +59,8 @@ public class KeyHook {
             }
         }.start();
 
-        // ä»¥ä¸‹éƒ¨åˆ†æ˜¯å¹²å˜›çš„ï¼Ÿ
-//        å®é™…ä¸Šwhileå¾ªç¯ä¸€æ¬¡éƒ½ä¸æ‰§è¡Œï¼Œè¿™äº›ä»£ç çš„ä½œç”¨æˆ‘ç†è§£æ˜¯è®©ç¨‹åºåœ¨GetMessageå‡½æ•°è¿™é‡Œé˜»å¡ï¼Œä¸ç„¶ç¨‹åºå°±ç»“æŸäº†ã€‚
+        // ÒÔÏÂ²¿·ÖÊÇ¸ÉÂïµÄ£¿
+//        Êµ¼ÊÉÏwhileÑ­»·Ò»´Î¶¼²»Ö´ĞĞ£¬ÕâĞ©´úÂëµÄ×÷ÓÃÎÒÀí½âÊÇÈÃ³ÌĞòÔÚGetMessageº¯ÊıÕâÀï×èÈû£¬²»È»³ÌĞò¾Í½áÊøÁË¡£
         int result;
         MSG msg = new MSG();
         while ((result = lib.GetMessage(msg, null, 0, 0)) != 0) {
